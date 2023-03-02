@@ -21,14 +21,24 @@ func serveHome(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 func main() {
+	world := newWorld()
+	go world.run()
 	router := httprouter.New()
 	router.GET("/", serveHome)
-
+	router.GET("/chat", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		client := NewClient(world, conn)
+		client.world.ChanEnter <- client
+	})
 	n := negroni.Classic()
 	n.UseHandler(router)
 
 	n.Run(":8080")
-	
+
 	//world := newWorld()
 	//go world.run()
 
