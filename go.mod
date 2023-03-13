@@ -8,6 +8,7 @@ require (
 	github.com/codegangsta/negroni v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/goincremental/negroni-sessions v0.0.0-20171223143234-40b49004abee // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/gorilla/pat v1.0.1 // indirect

@@ -1,61 +1,25 @@
 package main
 
 import (
-	"github.com/codegangsta/negroni"
-	"github.com/julienschmidt/httprouter"
+	"flag"
 	"log"
 	"net/http"
 )
 
-func serveHome(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	log.Println(r.URL)
-	if r.URL.Path != "/" {
-		http.Error(w, "Not found", http.StatusNotFound)
-		return
-	}
-	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-	http.ServeFile(w, r, "frontend/home.html")
-}
+var addr = flag.String("addr", ":8080", "http server address")
 
 func main() {
-	world := newWorld()
-	go world.run()
-	router := httprouter.New()
-	router.GET("/", serveHome)
-	router.GET("/chat", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		conn, err := upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		client := NewClient(world, conn)
-		client.world.ChanEnter <- client
+	flag.Parse()
+
+	wsServer := NewWebsocketServer()
+	go wsServer.Run()
+
+	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		ServeWs(wsServer, w, r)
 	})
-	n := negroni.Classic()
-	n.UseHandler(router)
 
-	n.Run(":8080")
+	fs := http.FileServer(http.Dir("./public"))
+	http.Handle("/", fs)
 
-	//world := newWorld()
-	//go world.run()
-
-	//http.HandleFunc("/", serveHome)
-	//
-	//http.HandleFunc("/chat", func(w http.ResponseWriter, r *http.Request) {
-	//	conn, err := upgrader.Upgrade(w, r, nil)
-	//	if err != nil {
-	//		log.Println(err)
-	//		return
-	//	}
-	//	client := NewClient(world, conn)
-	//	client.world.ChanEnter <- client
-	//})
-	//
-	//err := http.ListenAndServe(":8080", nil)
-	//if err != nil {
-	//	log.Fatal("ListenAndServe: ", err)
-	//}
+	log.Fatal(http.ListenAndServe(*addr, nil))
 }
